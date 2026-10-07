@@ -1,22 +1,12 @@
 # Báo Cáo Lab Day 21 - CI/CD cho AI Systems
 
-<!--
-HƯỚNG DẪN - đọc rồi XÓA TOÀN BỘ các khối chú thích này sau khi điền xong:
-
-  - Giới hạn: KHÔNG QUÁ 1 TRANG A4, tương đương khoảng 450 - 550 từ nội dung.
-  - Chỉ điền vào các chỗ ___ và các ô trong bảng. Không thêm mục mới.
-  - Viết bằng câu hoàn chỉnh, không gạch đầu dòng cụt lủn.
-  - Kiểm tra độ dài sau khi đã xóa hết chú thích:
-        wc -w nop-bai/bao-cao.md
-    và xem trước bản in bằng cách mở file trên GitHub rồi Ctrl+P / Cmd+P.
--->
 
 | | |
 |---|---|
-| Họ và tên | ___ |
-| MSSV | ___ |
+| Họ và tên | Trần Hoàng Duy Anh |
+| MSSV | 2A202602558 |
 | Lớp / Khóa | K4 |
-| Repo GitHub | https://github.com/___/___ |
+| Repo GitHub | https://github.com/Josee0801/K4-L3L4-Track2-Day21-TranHoangDuyAnh-2A202602558-CI-CD-for-AI-Systems |
 | Ngày nộp | 2026-10-07 |
 
 ---
@@ -43,40 +33,21 @@ Trong dữ liệu, khoảng 24,8% mẫu thuộc lớp thu nhập trên 50.000 US
 
 ## 3. Khó Khăn Gặp Phải và Cách Giải Quyết
 
-<!-- Nêu 2 - 3 khó khăn thật, mỗi ô một câu ngắn. -->
 
 | Khó khăn | Nguyên nhân | Cách giải quyết |
 |---|---|---|
-| ___ | ___ | ___ |
-| ___ | ___ | ___ |
-| ___ | ___ | ___ |
+| Không tạo được bucket S3 | User IAM thiếu quyền `s3:CreateBucket` | Được cấp thêm quyền, rồi tạo bucket và bật Block Public Access |
+| GitHub Actions không assume được role AWS | Secret `AWS_ROLE_ARN` sai định dạng, sau đó trust policy chưa khớp `sub` của repo | Dán đúng ARN đầy đủ và thêm `sub` dạng immutable vào trust policy |
+| SSM không thấy EC2 để deploy | Role EC2 thiếu `AmazonSSMManagedInstanceCore` | Gắn policy rồi khởi động lại SSM Agent |
 
 ---
 
 ## 4. So Sánh Bước 2 và Bước 3 (bắt buộc, 2 - 3 câu)
 
-<!-- Lấy số liệu từ bảng ở mục 3.6 của tasks/buoc-3.md. -->
 
 | | f1_score | accuracy |
 |---|---|---|
-| Bước 2 (chỉ `train_batch1`) | Chưa chạy trên cloud | Chưa chạy trên cloud |
-| Bước 3 (thêm `train_batch2`) | Chưa chạy trên cloud | Chưa chạy trên cloud |
+| Bước 2 (chỉ `train_batch1`) | 0.7149 | 0.8740 |
+| Bước 3 (thêm `train_batch2`) | 0.7354 | 0.8820 |
 
-**Nhận xét:** Chưa có kết quả GitHub Actions để so sánh. Cần cấu hình GCS remote, secrets và VM, sau đó lấy số liệu từ artifact của hai lần chạy; không suy diễn rằng thêm dữ liệu chắc chắn làm F1 tăng.
-
-<!--
-Một câu trả lời trung thực kiểu "f1 giảm 0,01 vì dữ liệu mới cùng phân phối, không mang
-thêm thông tin mới" được đánh giá cao hơn kết luận sai rằng thêm dữ liệu luôn tốt hơn.
--->
-
----
-
-## 5. Phần Bonus Đã Thực Hiện (nếu có)
-
-<!-- Xóa cả mục 5 nếu không làm bonus. Mỗi bonus tối đa 1 dòng. -->
-
-- [ ] Bonus 1 - Tracking MLflow từ xa với DagsHub: ___
-- [ ] Bonus 2 - Điều chỉnh ngưỡng quyết định: ___
-- [ ] Bonus 3 - Báo cáo precision / recall tự động: ___
-- [ ] Bonus 4 - Hoàn trả về phiên bản trước: ___
-- [ ] Bonus 5 - Cảnh báo lệch lạc dữ liệu: ___
+**Nhận xét:** Sau khi thêm `train_batch2`, số mẫu huấn luyện tăng gấp đôi (22.361 lên 44.722) và F1 tăng từ 0.7149 lên 0.7354 (accuracy từ 0.874 lên 0.882), cùng chạy trên GitHub Actions và đều vượt ngưỡng 0.65. Mức tăng khoảng 0.02 cho thấy dữ liệu mới có ích, nhưng chỉ là một lần chạy trên một tập holdout nên chưa đủ để kết luận thêm dữ liệu luôn cải thiện mô hình.
