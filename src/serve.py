@@ -1,41 +1,42 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from google.cloud import storage
-import joblib
 import os
+from contextlib import asynccontextmanager
+from typing import AsyncGenerator
 
-app = FastAPI()
+import joblib
+import pandas as pd
+import boto3
+from fastapi import FastAPI, HTTPException, Request
+from pydantic import BaseModel
 
-ARTIFACT_BUCKET = os.environ["ARTIFACT_BUCKET"]
+
+FEATURE_NAMES = [
+    "age", "workclass", "education_num", "marital_status", "occupation",
+    "relationship", "sex", "capital_gain", "capital_loss", "hours_per_week",
+]
+ARTIFACT_BUCKET = os.environ.get("ARTIFACT_BUCKET")
 MODEL_KEY = "artifacts/current/model.joblib"
 MODEL_PATH = os.path.expanduser("~/models/model.joblib")
 
 
 def download_model():
-    """
-    Tai file model.joblib tu cloud storage ve may khi server khoi dong.
+    """Tải model hiện hành từ S3 về máy chủ bằng IAM role credentials."""
+    if not ARTIFACT_BUCKET:
+        raise RuntimeError("ARTIFACT_BUCKET must be set before starting the API.")
 
-    Ham nay duoc goi mot lan khi module duoc import. Su dung
-    GOOGLE_APPLICATION_CREDENTIALS de xac thuc (duoc dat trong systemd service).
-    """
-    # TODO 1: Tao storage.Client()
-    # client = storage.Client()
-
-    # TODO 2: Lay bucket va blob tuong ung
-    # bucket = client.bucket(ARTIFACT_BUCKET)
-    # blob   = bucket.blob(MODEL_KEY)
-
-    # TODO 3: Tai file model xuong may
-    # blob.download_to_filename(MODEL_PATH)
-
-    # TODO 4: In thong bao thanh cong
-    # print("Model da duoc tai xuong tu cloud storage.")
-
-    pass  # xoa dong nay sau khi hoan thanh tat ca TODO ben tren
+    os.makedirs(os.path.dirname(MODEL_PATH), exist_ok=True)
+    client = boto3.client("s3")
+    client.download_file(ARTIFACT_BUCKET, MODEL_KEY, MODEL_PATH)
+    print("Model da duoc tai xuong tu Amazon S3.")
+    return joblib.load(MODEL_PATH)
 
 
-download_model()
-model = joblib.load(MODEL_PATH)
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    app.state.model = download_model()
+    yield
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 class ScoreRequest(BaseModel):
@@ -43,19 +44,12 @@ class ScoreRequest(BaseModel):
 
 
 @app.get("/healthz")
-def healthz():
-    """
-    Endpoint kiem tra suc khoe server.
-    GitHub Actions goi endpoint nay sau khi deploy de xac nhan server dang chay.
-
-    Tra ve: {"status": "ok"}
-    """
-    # TODO 5: Tra ve dict {"status": "ok"}
-    pass  # xoa dong nay sau khi hoan thanh
+def healthz() -> dict[str, str]:
+    return {"status": "ok"}
 
 
 @app.post("/score")
-def score(req: ScoreRequest):
+def score(req: ScoreRequest, request: Request) -> dict[str, int | str]:
     """
     Endpoint suy luan chinh.
 
@@ -66,17 +60,17 @@ def score(req: ScoreRequest):
         age, workclass, education_num, marital_status, occupation,
         relationship, sex, capital_gain, capital_loss, hours_per_week
     """
-    # TODO 6: Kiem tra so luong dac trung.
-    # Neu len(req.features) != 10, raise HTTPException(status_code=400, ...)
+    if len(req.features) != len(FEATURE_NAMES):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Expected {len(FEATURE_NAMES)} features (adult income)",
+        )
 
-    # TODO 7: Goi model.predict([req.features]) de lay ket qua du doan.
-    # pred = model.predict(...)
-
-    # TODO 8: Tra ve dict chua "prediction" (int) va "label" (string).
-    # Nhan tuong ung: 0 -> "thu_nhap_thap", 1 -> "thu_nhap_cao"
-    # return {"prediction": ..., "label": ...}
-
-    pass  # xoa dong nay sau khi hoan thanh tat ca TODO ben tren
+    model = request.app.state.model
+    features = pd.DataFrame([req.features], columns=FEATURE_NAMES)
+    prediction = int(model.predict(features)[0])
+    label = "thu_nhap_cao" if prediction == 1 else "thu_nhap_thap"
+    return {"prediction": prediction, "label": label}
 
 
 if __name__ == "__main__":

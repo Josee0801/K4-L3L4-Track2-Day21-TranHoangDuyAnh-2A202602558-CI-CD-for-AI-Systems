@@ -11,7 +11,7 @@ Khoá: K4
 Sau khi hoàn thành lab này, bạn có khả năng:
 
 1. Thiết lập quá trình theo dõi thí nghiệm máy học bằng MLflow trên máy tính cá nhân.
-2. Quản lý và phiên bản hóa dữ liệu bằng DVC với cloud object storage (GCP / AWS / Azure) làm remote.
+2. Quản lý và phiên bản hóa dữ liệu bằng DVC với Amazon S3 làm remote.
 3. Xây dựng pipeline CI/CD hoàn chỉnh trên GitHub Actions với bốn giai đoạn: kiểm thử, huấn luyện, kiểm tra chất lượng, triển khai.
 4. Triển khai mô hình lên máy chủ ảo trên cloud (GCE / EC2 / Azure VM) dưới dạng REST API bằng FastAPI.
 5. Chọn đúng chỉ số đánh giá cho bài toán có phân bố lớp mất cân bằng.
@@ -51,18 +51,17 @@ Phần mềm cần cài đặt trên máy tính cá nhân:
 
 - Python 3.10 trở lên
 - Git và tài khoản GitHub
-- Tài khoản cloud (chọn một trong ba: GCP, AWS, hoặc Azure — gói miễn phí/trial đủ dùng cho lab này)
-- CLI của cloud provider đã chọn (xem hướng dẫn cài đặt chi tiết tại tasks/buoc-2.md)
+- Tài khoản AWS và AWS CLI v2 đã cấu hình quyền truy cập (xem hướng dẫn tại
+  [tasks/buoc-2-aws.md](tasks/buoc-2-aws.md)).
+- Repo này được cấu hình cho AWS: Amazon S3/DVC, GitHub Actions OIDC, EC2 và
+  Systems Manager Run Command.
 
 Kiểm tra cài đặt:
 
 ```bash
 python --version     # Python 3.10.x trở lên
 git --version
-# Kiểm tra CLI của cloud provider đã chọn (một trong ba):
-gcloud --version     # GCP
-aws --version        # AWS
-az --version         # Azure
+aws --version
 ```
 
 ---
@@ -217,15 +216,14 @@ __pycache__/
 mlflow==2.13.0
 scikit-learn==1.4.2
 pandas==2.2.2
-# DVC extra theo provider: [gs]=GCP, [s3]=AWS, [azure]=Azure
-dvc[gs]==3.50.1
+# DVC S3 remote
+dvc[s3]==3.50.1
 pathspec==0.11.2
 pytest==8.2.0
 fastapi==0.111.0
 uvicorn==0.29.0
 joblib==1.4.2
-# Cloud SDK theo provider: google-cloud-storage (GCP), boto3 (AWS), azure-storage-blob (Azure)
-google-cloud-storage==2.16.0
+boto3==1.34.131
 pyyaml==6.0.1
 ```
 
@@ -236,7 +234,7 @@ pyyaml==6.0.1
 | Bước | Nội dung | File hướng dẫn |
 |---|---|---|
 | 1 | Thực nghiệm cục bộ và theo dõi bằng MLflow | tasks/buoc-1.md |
-| 2 | Pipeline CI/CD tự động với GitHub Actions và DVC | tasks/buoc-2.md |
+| 2 | Pipeline CI/CD tự động với GitHub Actions, DVC, AWS S3 và EC2 | [tasks/buoc-2-aws.md](tasks/buoc-2-aws.md) |
 | 3 | Huấn luyện liên tục khi có dữ liệu mới | tasks/buoc-3.md |
 
 Bắt đầu từ [Bước 1](tasks/buoc-1.md).

@@ -1,11 +1,13 @@
 mlflow.db
 mlartifacts/
+mlruns/
 models/
 outputs/
 data/train_batch1.csv
 data/holdout.csv
 data/train_batch2.csv
 sa-key.json
+*.pem
 .env
 .venv/
 __pycache__/

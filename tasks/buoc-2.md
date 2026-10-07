@@ -102,6 +102,11 @@ git commit -m "feat: track datasets with DVC"
 dvc push
 ```
 
+Workflow GitHub Actions trong repo tạo remote `labstore` lúc chạy từ secret
+`ARTIFACT_BUCKET`, tại `gs://<ARTIFACT_BUCKET>/dvc`; cùng bucket được dùng cho
+model tại `artifacts/current/model.joblib`. Hãy dùng cùng bucket khi cấu hình remote
+cục bộ và chạy `dvc push`.
+
 Xác nhận trên Cloud Storage Console rằng các file dữ liệu đã xuất hiện dưới prefix `dvc/` trong bucket.
 
 ---
